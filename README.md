@@ -1,3 +1,4 @@
+
 ```markdown
 # 🎮 LoL-MetaScraper: Competitive Intelligence Dashboard
 
@@ -111,4 +112,3 @@ Este proyecto cumple con los términos de servicio de las APIs utilizadas y no i
 
 ```
 
-```
