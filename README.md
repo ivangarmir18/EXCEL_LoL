@@ -1,67 +1,50 @@
+# LoL-MetaScraper: Competitive Intelligence ETL & Scraper
 
-# LoL-MetaScraper: Dashboard de Inteligencia Competitiva
+## 📌 Descripción General
 
-## Descripción General
+**LoL-MetaScraper** es un sistema automatizado de inteligencia competitiva basado en la extracción de datos en tiempo real (Web Scraping). Funciona como un motor de soporte analítico diseñado para optimizar la toma de decisiones mediante estadística pura (Winrates, Banrates, Sinergias y Counters).
 
-**LoL-MetaScraper** es un sistema automatizado de inteligencia competitiva para League of Legends. Funciona como un "Coach Virtual" basado en datos, diseñado para optimizar la fase de draft mediante estadística pura.
+El sistema extrae, normaliza e inyecta métricas dinámicas directamente en una base de datos en la nube (Google Sheets), que actúa como cerebro estratégico del usuario final.
 
-El sistema utiliza una arquitectura híbrida: un script de Python extrae datos en tiempo real del meta actual (Winrates, Banrates, Counters) y los inyecta en una Hoja de Cálculo Maestra (Google Sheets), que actúa como la interfaz de usuario y cerebro estratégico.
+> **🤖 Nota sobre el desarrollo asistido por IA:**
+> La concepción del proyecto, el diseño de la arquitectura ETL, la lógica de normalización de datos y el flujo de trabajo (desde la extracción hasta el volcado en Sheets) son de mi autoría. Para la redacción de la sintaxis pura de Python y la construcción ágil de la interfaz gráfica, me he apoyado en Inteligencia Artificial. Mi rol en este proyecto es el de **Arquitecto de Software y Datos**, enfocándome en resolver el problema y estructurar la solución algorítmica de forma eficiente.
 
-## Arquitectura del Sistema
+## ⚙️ Arquitectura del Sistema (ETL & GUI)
 
-El proyecto no tiene interfaz gráfica tradicional; la interfaz es el propio Excel en la nube.
+El proyecto utiliza una arquitectura de procesamiento en segundo plano con interfaz gráfica asíncrona:
 
-* **Motor (Python):** `update_lol_data.py` - Realiza el scraping web usando Selenium y mapea los nombres de campeones.
-* **Launcher:** `launcher.bat` - Ejecutable de un solo clic para actualizar los datos.
-* **Base de Datos/UI:** Google Sheets - Donde se visualizan los datos y se calculan las sinergias.
-* **Seguridad:** `credentials.json` - Llave de acceso a la API de Google Cloud.
+### 1. Interfaz Gráfica (GUI) y Concurrencia
+* **Dashboard Tkinter:** Interfaz de usuario completa con visor de métricas en tiempo real (`Treeview`), barra de progreso y consola de *logs*.
+* **Procesamiento Asíncrono:** Uso de `threading` y `queue` para aislar el proceso pesado de *scraping* del hilo principal de la interfaz, garantizando una experiencia de usuario fluida sin cuelgues.
 
-## Requisitos Previos
+### 2. Extract (Web Scraping Híbrido)
+* **Motor Selenium Optimizado:** Configuración del WebDriver con argumentos *anti-bot* (`AutomationControlled`) y bloqueo de carga de imágenes para maximizar la velocidad de respuesta.
+* **Parseo HTML con BeautifulSoup:** Una vez que Selenium resuelve el DOM, BeautifulSoup extrae eficientemente las tablas de *counters* y *winrates*.
+* **Manejo de Excepciones Dinámico:** Lógica de reintentos y mapeo predictivo de URLs (`SLUG_MAPPING`) para campeones con nomenclaturas irregulares.
 
-1.  Tener instalado **Google Chrome**.
-2.  Tener una cuenta de Google (para el Sheet).
-3.  Python 3.8 o superior instalado.
+### 3. Transform (Data Cleaning)
+* **Normalización de Strings:** Estandarización de nombres extraídos de la web (limpieza de caracteres especiales y espacios) para que coincidan unívocamente con la nomenclatura de la base de datos de destino (`OUTPUT_NORMALIZATION`).
 
-## Instalación y Configuración
+### 4. Load (Google Sheets API)
+* **Integración con GSpread:** Conexión mediante Service Accounts de Google Cloud (`credentials.json`) para lectura y escritura masiva mediante Pandas DataFrame.
+* **Auto-Backup de Seguridad:** El sistema clona automáticamente la hoja de destino en la nube (`worksheet.duplicate`) creando un respaldo con *timestamp* antes de sobrescribir cualquier dato en producción.
 
-### 1. Preparación del Entorno
-Si tienes el archivo `launcher.bat`, este se encargará de instalar las dependencias automáticamente. Si prefieres hacerlo manual:
+## 🛠️ Stack Tecnológico
+* **Lenguaje:** Python 3.8+
+* **Frontend:** `tkinter`, `ttk`
+* **Scraping:** `selenium`, `webdriver_manager`, `beautifulsoup4`
+* **Procesamiento y API:** `pandas`, `gspread`
+* **Concurrencia:** `threading`, `queue`
 
-    pip install pandas selenium gspread oauth2client webdriver-manager beautifulsoup4
+## 🚀 Instalación y Despliegue
 
-### 2. Configuración de Google Cloud (CRÍTICO)
-Para que el script pueda escribir en tu Excel, necesitas autorizarlo:
-
-1.  Consigue el archivo de credenciales JSON de tu Service Account de Google Cloud.
-2.  Renombra ese archivo a: `credentials.json`
-3.  Colócalo en la **misma carpeta** que el script `update_lol_data.py`.
-4.  Abre tu Google Sheet y dale acceso de "Editor" al email que aparece dentro del archivo json (el `client_email`).
-
-## Cómo Usar
-
-1.  Haz doble clic en **`launcher.bat`**.
-2.  Se abrirá una ventana negra (consola) y verás cómo el navegador se abre y cierra trabajando en segundo plano.
-3.  Espera a que la consola diga que ha terminado o se cierre.
-4.  Ve a tu **Google Sheet**.
-    * La pestaña **"CRUDO"** tendrá los datos frescos del día.
-    * La pestaña **"HOJA BUENA"** (tu Dashboard) se habrá actualizado automáticamente con las nuevas estadísticas.
-
-## Lógica del Dashboard
-
-El sistema no solo vuelca datos, los procesa para tomar decisiones:
-
-* **Winrate:** ¿Está fuerte el campeón en este parche?
-* **Counter Pick:** ¿Anula mecánicamente al rival de línea?
-* **Sinergia:** ¿Combina con la composición de mi equipo (ej. Wombo Combo, Poke)?
-
-## Estructura de Archivos
-
-/raiz-del-proyecto
-│
-├── update_lol_data.py    # Código fuente del scraper
-├── launcher.bat          # Ejecutable para usuario final
-├── credentials.json      # [TU ARCHIVO] Llave de seguridad (NO SUBIR A GITHUB)
-└── README.md             # Este archivo
+1. Clonar el repositorio.
+2. Asegurar la instalación de las dependencias requeridas (ver `requirements.txt`).
+3. **Configuración de Google Cloud (CRÍTICO):**
+   * Obtener el archivo JSON de credenciales de una Service Account (Google Cloud Platform).
+   * Renombrarlo a `credentials.json` y ubicarlo en la raíz del proyecto.
+   * Otorgar permisos de "Editor" en el Google Sheet al email de la Service Account.
+4. Ejecutar el proyecto mediante el archivo `launcher.bat` (que automatiza el inicio) o lanzando `python update_lol_data.py`.
 
 ---
-Desarrollado por Iván García Miranda
+*Desarrollado por Iván García Miranda.*
